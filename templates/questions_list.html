@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <title>DNet ▏ Темы и вопросы</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/dnet.png') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(to right, #4facfe, #00f2fe);
+            --primary-color: #4facfe;
+            --bg-dark: rgba(10, 15, 25, 0.7);
+            --border-color: rgba(0, 120, 255, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #0a0a0a;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 40, 80, 0.2) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 60, 120, 0.2) 0%, transparent 20%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Общий контейнер */
+        .container {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Левая панель с темами (ПК версия) */
+        .themes-sidebar {
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(15px);
+            padding: 15px;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        /* Мобильное меню */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #111;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-dark);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 60px 15px 15px;
+            z-index: 999;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* Общие стили для тем и подтем */
+        .themes-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .theme-category {
+            margin-bottom: 12px;
+        }
+
+        .theme-main {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+
+        .theme-main:hover {
+            background: rgba(0, 120, 255, 0.1);
+        }
+
+        .theme-main i {
+            margin-right: 8px;
+            font-size: 12px;
+            color: var(--primary-color);
+            min-width: 16px;
+            text-align: center;
+        }
+
+        .subthemes {
+            padding-left: 16px;
+            border-left: 1px solid var(--border-color);
+            margin-left: 8px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .theme-category.active .subthemes {
+            max-height: 500px;
+        }
+
+        .subtheme {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 5px 8px;
+            border-radius: 4px;
+            display: block;
+        }
+
+        .subtheme:hover {
+            background: rgba(0, 120, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .subtheme.active {
+            background: rgba(0, 120, 255, 0.2);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Основное содержимое */
+        .content {
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .content-header {
+            font-size: 22px;
+            margin-bottom: 20px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            background-color: rgba(10, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 0;
+            z-index: 5;
+        }
+
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .question-card {
+            background: rgba(10, 15, 25, 0.4);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.2s ease;
+        }
+
+        .question-card:hover {
+            border-color: rgba(0, 150, 255, 0.4);
+            box-shadow: 0 3px 10px rgba(0, 60, 120, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .question-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .question-meta {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .question-meta span {
+            display: flex;
+            align-items: center;
+        }
+
+        .question-meta i {
+            margin-right: 4px;
+            font-size: 11px;
+        }
+
+        /* Панель пользователя */
+        .user-panel {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(10, 15, 25, 0.9);
+            border: 1px solid rgba(0, 120, 255, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            min-width: auto;
+            transition: all 0.3s ease;
+            gap: 15px;
+        }
+
+        .user-panel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 60, 120, 0.3);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #111;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .settings-btn:hover {
+            color: var(--primary-color);
+            transform: rotate(30deg);
+        }
+
+        .settings-icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1A1F2C;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .tooltip:after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 4px;
+            border-style: solid;
+            border-color: #1A1F2C transparent transparent transparent;
+        }
+
+        .settings-container {
+            position: relative;
+        }
+
+        .settings-container:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Стили для лайков и дизлайков */
+        .like-dislike {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .like-btn, .dislike-btn {
+            background: rgba(10, 15, 25, 0.4);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 24px;
+        }
+
+        .like-btn i, .dislike-btn i {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .like-btn:hover, .dislike-btn:hover {
+            background: rgba(0, 120, 255, 0.2);
+            border-color: rgba(0, 150, 255, 0.4);
+        }
+
+        .like-btn:hover i {
+            color: #4CAF50;
+        }
+
+        .dislike-btn:hover i {
+            color: #f44336;
+        }
+
+        .like-btn.active, .dislike-btn.active {
+            background: rgba(0, 120, 255, 0.3);
+        }
+
+        .like-btn.active i {
+            color: #4CAF50;
+        }
+
+        .dislike-btn.active i {
+            color: #f44336;
+        }
+
+        .likes-count, .dislikes-count {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            min-width: 10px;
+            text-align: center;
+        }
+
+        .like-btn.active + .likes-count {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+
+        .dislike-btn.active + .dislikes-count {
+            color: #f44336;
+            font-weight: 500;
+        }
+
+        /* Состояния загрузки */
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .error {
+            padding: 20px;
+            text-align: center;
+            color: #f44336;
+        }
+
+        .no-questions {
+            padding: 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .themes-sidebar {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .content {
+                padding-top: 60px;
+            }
+            
+            .content-header {
+                font-size: 20px;
+                position: static;
+                background-color: transparent;
+                backdrop-filter: none;
+            }
+            
+            .user-panel {
+                bottom: 15px;
+                right: 15px;
+                min-width: 160px;
+            }
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 120, 255, 0.4);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 120, 255, 0.6);
+        }
+
+/* Система уведомлений */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.notification {
+    background: rgba(15, 20, 30, 0.95);
+    color: #fff;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 120, 255, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 60, 120, 0.3);
+    display: flex;
+    align-items: center;
+    max-width: 350px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: fadeIn 1.5s ease-out;
+    transition: all 1.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #4facfe, #00f2fe);
+}
+
+.notification i {
+    margin-right: 12px;
+    font-size: 18px;
+}
+
+/* Типы уведомлений */
+.notification.success {
+    border-color: rgba(46, 213, 115, 0.3);
+}
+
+.notification.success::before {
+    background: linear-gradient(to bottom, #2ed573, #7bed9f);
+}
+
+.notification.error {
+    border-color: rgba(255, 71, 87, 0.3);
+}
+
+.notification.error::before {
+    background: linear-gradient(to bottom, #ff4757, #ff6b81);
+}
+
+.notification.info {
+    border-color: rgba(0, 150, 255, 0.3);
+}
+
+.notification.info::before {
+    background: linear-gradient(to bottom, #4facfe, #00f2fe);
+}
+
+/* Анимация исчезновения */
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100%); }
+}
+
+.notification.fade-out {
+    animation: fadeOut 0.3s ease-in forwards;
+}
+
+.user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #111;
+    overflow: hidden; /* Добавлено для корректного отображения изображения */
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="notification-container"></div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i> Темы
+    </button>
+
+    <!-- Мобильное меню -->
+    <div class="mobile-menu" id="mobileMenu">
+        <h2 class="themes-title">Все темы</h2>
+        
+        <div class="theme-category active" data-category-id="programming">
+            <div class="theme-main">
+                <i class="fas fa-code"></i> Программирование
+            </div>
+            <div class="subthemes">
+                <div class="subtheme active" data-subtheme-id="javascript">JavaScript</div>
+                <div class="subtheme" data-subtheme-id="python">Python</div>
+                <div class="subtheme" data-subtheme-id="java">Java</div>
+                <div class="subtheme" data-subtheme-id="cpp">C/C++</div>
+                <div class="subtheme" data-subtheme-id="csharp">C#</div>
+                <div class="subtheme" data-subtheme-id="go">Go</div>
+                <div class="subtheme" data-subtheme-id="ruby">Ruby</div>
+                <div class="subtheme" data-subtheme-id="php">PHP</div>
+                <div class="subtheme" data-subtheme-id="swift">Swift</div>
+                <div class="subtheme" data-subtheme-id="kotlin">Kotlin</div>
+                <div class="subtheme" data-subtheme-id="assembler">Assembler</div>
+                <div class="subtheme" data-subtheme-id="typescript">TypeScript</div>
+                <div class="subtheme" data-subtheme-id="rust">Rust</div>
+            </div>
+        </div>
+        
+        <div class="theme-category" data-category-id="data-analysis">
+            <div class="theme-main">
+                <i class="fas fa-chart-line"></i> Анализ данных
+            </div>
+            <div class="subthemes">
+                <div class="subtheme" data-subtheme-id="sql">SQL</div>
+                <div class="subtheme" data-subtheme-id="pandas">Pandas</div>
+                <div class="subtheme" data-subtheme-id="numpy">NumPy</div>
+                <div class="subtheme" data-subtheme-id="ml">Машинное обучение</div>
+                <div class="subtheme" data-subtheme-id="analytics">Аналитика</div>
+                <div class="subtheme" data-subtheme-id="bigdata">Big Data</div>
+            </div>
+        </div>
+        
+        <div class="theme-category" data-category-id="design">
+            <div class="theme-main">
+                <i class="fas fa-paint-brush"></i> Дизайн
+            </div>
+            <div class="subthemes">
+                <div class="subtheme" data-subtheme-id="uiux">UI/UX</div>
+                <div class="subtheme" data-subtheme-id="figma">Figma</div>
+                <div class="subtheme" data-subtheme-id="photoshop">Adobe Photoshop</div>
+                <div class="subtheme" data-subtheme-id="illustrator">Illustrator</div>
+                <div class="subtheme" data-subtheme-id="webdesign">Web Design</div>
+                <div class="subtheme" data-subtheme-id="mobiledesign">Mobile Design</div>
+            </div>
+        </div>
+
+        <div class="theme-category" data-category-id="devops">
+            <div class="theme-main">
+                <i class="fas fa-server"></i> DevOps
+            </div>
+            <div class="subthemes">
+                <div class="subtheme" data-subtheme-id="docker">Docker</div>
+                <div class="subtheme" data-subtheme-id="kubernetes">Kubernetes</div>
+                <div class="subtheme" data-subtheme-id="cicd">CI/CD</div>
+                <div class="subtheme" data-subtheme-id="aws">AWS</div>
+                <div class="subtheme" data-subtheme-id="azure">Azure</div>
+                <div class="subtheme" data-subtheme-id="sysadmin">Системное Администрирование</div>
+            </div>
+        </div>
+
+        <div class="theme-category" data-category-id="mobile">
+            <div class="theme-main">
+                <i class="fas fa-mobile-alt"></i> Мобильная разработка
+            </div>
+            <div class="subthemes">
+                <div class="subtheme" data-subtheme-id="android">Android</div>
+                <div class="subtheme" data-subtheme-id="ios">iOS</div>
+                <div class="subtheme" data-subtheme-id="flutter">Flutter</div>
+                <div class="subtheme" data-subtheme-id="reactnative">React Native</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контейнер -->
+    <div class="container">
+        <!-- Левая панель с темами (ПК версия) -->
+        <div class="themes-sidebar">
+            <h2 class="themes-title">Все темы</h2>
+            
+            <div class="theme-category active" data-category-id="programming">
+                <div class="theme-main">
+                    <i class="fas fa-code"></i> Программирование
+                </div>
+                <div class="subthemes">
+                    <div class="subtheme active" data-subtheme-id="javascript">JavaScript</div>
+                    <div class="subtheme" data-subtheme-id="python">Python</div>
+                    <div class="subtheme" data-subtheme-id="java">Java</div>
+                    <div class="subtheme" data-subtheme-id="cpp">C/C++</div>
+                    <div class="subtheme" data-subtheme-id="csharp">C#</div>
+                    <div class="subtheme" data-subtheme-id="go">Go</div>
+                    <div class="subtheme" data-subtheme-id="ruby">Ruby</div>
+                    <div class="subtheme" data-subtheme-id="php">PHP</div>
+                    <div class="subtheme" data-subtheme-id="swift">Swift</div>
+                    <div class="subtheme" data-subtheme-id="kotlin">Kotlin</div>
+                    <div class="subtheme" data-subtheme-id="assembler">Assembler</div>
+                    <div class="subtheme" data-subtheme-id="typescript">TypeScript</div>
+                    <div class="subtheme" data-subtheme-id="rust">Rust</div>
+                </div>
+            </div>
+            
+            <div class="theme-category" data-category-id="data-analysis">
+                <div class="theme-main">
+                    <i class="fas fa-chart-line"></i> Анализ данных
+                </div>
+                <div class="subthemes">
+                    <div class="subtheme" data-subtheme-id="sql">SQL</div>
+                    <div class="subtheme" data-subtheme-id="pandas">Pandas</div>
+                    <div class="subtheme" data-subtheme-id="numpy">NumPy</div>
+                    <div class="subtheme" data-subtheme-id="ml">Машинное обучение</div>
+                    <div class="subtheme" data-subtheme-id="analytics">Аналитика</div>
+                    <div class="subtheme" data-subtheme-id="bigdata">Big Data</div>
+                </div>
+            </div>
+            
+            <div class="theme-category" data-category-id="design">
+                <div class="theme-main">
+                    <i class="fas fa-paint-brush"></i> Дизайн
+                </div>
+                <div class="subthemes">
+                    <div class="subtheme" data-subtheme-id="uiux">UI/UX</div>
+                    <div class="subtheme" data-subtheme-id="figma">Figma</div>
+                    <div class="subtheme" data-subtheme-id="photoshop">Adobe Photoshop</div>
+                    <div class="subtheme" data-subtheme-id="illustrator">Illustrator</div>
+                    <div class="subtheme" data-subtheme-id="webdesign">Web Design</div>
+                    <div class="subtheme" data-subtheme-id="mobiledesign">Mobile Design</div>
+                </div>
+            </div>
+
+            <div class="theme-category" data-category-id="devops">
+                <div class="theme-main">
+                    <i class="fas fa-server"></i> DevOps
+                </div>
+                <div class="subthemes">
+                    <div class="subtheme" data-subtheme-id="docker">Docker</div>
+                    <div class="subtheme" data-subtheme-id="kubernetes">Kubernetes</div>
+                    <div class="subtheme" data-subtheme-id="cicd">CI/CD</div>
+                    <div class="subtheme" data-subtheme-id="aws">AWS</div>
+                    <div class="subtheme" data-subtheme-id="azure">Azure</div>
+                    <div class="subtheme" data-subtheme-id="sysadmin">Системное Администрирование</div>
+                </div>
+            </div>
+
+            <div class="theme-category" data-category-id="mobile">
+                <div class="theme-main">
+                    <i class="fas fa-mobile-alt"></i> Мобильная разработка
+                </div>
+                <div class="subthemes">
+                    <div class="subtheme" data-subtheme-id="android">Android</div>
+                    <div class="subtheme" data-subtheme-id="ios">iOS</div>
+                    <div class="subtheme" data-subtheme-id="flutter">Flutter</div>
+                    <div class="subtheme" data-subtheme-id="reactnative">React Native</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основное содержимое -->
+        <div class="content">
+            <h1 class="content-header">
+                {% if category and subcategory %}
+                    Вопросы по {{ subcategory }}
+                {% else %}
+                    Все вопросы
+                {% endif %}
+            </h1>
+            
+<div class="questions-list" id="questionsContainer"
+     hx-get="{{ url_for('htmx_questions', category=category if category else '', subcategory=subcategory if subcategory else '') }}"
+     hx-trigger="load, questionsChanged from:body">
+    <!-- Сюда будет загружаться контент -->
+    {% if posts %}
+        {% for post in posts %}
+        <div class="question-card" data-question-id="{{ post.id }}">
+            <a href="{{ url_for('view_question', post_id=post.id) }}" class="question-title">{{ post.title }}</a>
+            <div class="question-meta">
+                <span><i class="far fa-user"></i> {{ post.author.username }}</span>
+                <span><i class="far fa-clock"></i> {{ post.date }}</span>
+                <span><i class="far fa-comment"></i> {{ post.answers|length }} ответов</span>
+                <span><i class="far fa-eye"></i> {{ post.views }} просмотров</span>
+                <div class="like-dislike">
+                    <button class="like-btn" 
+                            hx-post="/vote"
+                            hx-trigger="click"
+                            hx-target="[data-question-id='{{ post.id }}']"
+                            hx-swap="outerHTML"
+                            hx-vals='{"question_id": "{{ post.id }}", "vote_type": "like"}'>
+                        <i class="fas fa-thumbs-up"></i>
+                    </button>
+                    <span class="likes-count">{{ post.likes }}</span>
+                    <button class="dislike-btn" 
+                            hx-post="/vote"
+                            hx-trigger="click"
+                            hx-target="[data-question-id='{{ post.id }}']"
+                            hx-swap="outerHTML"
+                            hx-vals='{"question_id": "{{ post.id }}", "vote_type": "dislike"}'>
+                        <i class="fas fa-thumbs-down"></i>
+                    </button>
+                    <span class="dislikes-count">{{ post.dislikes }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-questions">Пока нет вопросов по этой теме</div>
+    {% endif %}
+</div>
+        </div>
+    </div>
+    
+<!-- Панель пользователя -->
+<div class="user-panel">
+    <div class="user-info">
+        <div class="user-avatar">
+            {% if user.avatar.startswith('avatars_ID/') %}
+                <!-- Пользовательская аватарка -->
+                <img src="{{ url_for('get_avatar', avatar_path=user.avatar) }}" 
+                     alt="Аватар пользователя"
+                     onerror="this.onerror=null; 
+                             this.src='{{ url_for('static', filename='img/standard_user_avatar.png') }}';
+                             this.onerror=null;
+                             this.parentElement.innerHTML='{{ user.username[0]|upper }}'">
+            {% else %}
+                <!-- Стандартная аватарка -->
+                <img src="{{ url_for('static', filename='img/' + user.avatar) }}" 
+                     alt="Стандартный аватар"
+                     onerror="this.onerror=null; 
+                             this.parentElement.innerHTML='{{ user.username[0]|upper }}'">
+            {% endif %}
+        </div>
+        <div class="user-name">{{ user.username }}</div>
+    </div>
+    
+    <div class="settings-container">
+        <a href="{{ url_for('profile_settings') }}" class="settings-btn">
+            <svg class="settings-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle r="3" cy="12" cx="12"></circle>
+            </svg>
+        </a>
+        <div class="tooltip">Настройки</div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.6"></script>
+<script>
+    // Настройка HTMX
+    htmx.config.useTemplateFragments = true;
+    
+    // Глобальные обработчики ошибок HTMX
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        showNotification('Ошибка при загрузке данных', 'error');
+    });
+    
+    document.body.addEventListener('htmx:sendError', function(evt) {
+        showNotification('Ошибка соединения', 'error');
+    });
+
+
+    // Инициализация Socket.IO
+    const socket = io();
+    
+    // Обработка новых вопросов
+    socket.on('new_question', function(data) {
+        const currentCategory = "{{ category if category else '' }}";
+        const currentSubcategory = "{{ subcategory if subcategory else '' }}";
+        
+        // Если это общий список или совпадает категория/подкатегория
+        if (!currentCategory || 
+            (data.category === currentCategory && 
+             data.subcategory === currentSubcategory)) {
+            // Обновляем список вопросов
+            htmx.trigger('#questionsContainer', 'questionsChanged');
+            showNotification('Добавлен новый вопрос!', 'info');
+        }
+    });
+
+    // Обработка кликов по подкатегориям
+    document.querySelectorAll('.subtheme').forEach(item => {
+        item.addEventListener('click', function() {
+            const category = this.closest('.theme-category').dataset.categoryId;
+            const subcategory = this.dataset.subthemeId;
+            
+            // Обновляем активный элемент
+            document.querySelectorAll('.subtheme').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Обновляем заголовок
+            document.querySelector('.content-header').textContent = `Вопросы по ${this.textContent}`;
+            
+            // Обновляем URL без перезагрузки страницы
+            history.pushState(null, null, `/questions/${category}/${subcategory}`);
+            
+            // Загружаем вопросы через HTMX
+            htmx.ajax('GET', `/htmx/questions?category=${category}&subcategory=${subcategory}`, {
+                target: '#questionsContainer',
+                swap: 'innerHTML'
+            });
+            
+            // Закрываем мобильное меню, если оно открыто
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu.style.display === 'block') {
+                mobileMenu.style.display = 'none';
+            }
+        });
+    });
+
+    // Обработка кнопки "Назад" в браузере
+    window.addEventListener('popstate', function() {
+        const path = window.location.pathname;
+        if (path.startsWith('/questions/')) {
+            const parts = path.split('/');
+            if (parts.length >= 4) {
+                const category = parts[2];
+                const subcategory = parts[3];
+                
+                // Находим и активируем соответствующую подтему
+                const subtheme = document.querySelector(`.subtheme[data-subtheme-id="${subcategory}"]`);
+                if (subtheme) {
+                    document.querySelectorAll('.subtheme').forEach(el => el.classList.remove('active'));
+                    subtheme.classList.add('active');
+                    
+                    // Обновляем заголовок
+                    document.querySelector('.content-header').textContent = `Вопросы по ${subtheme.textContent}`;
+                    
+                    // Загружаем вопросы
+                    htmx.ajax('GET', `/htmx/questions?category=${category}&subcategory=${subcategory}`, {
+                        target: '#questionsContainer',
+                        swap: 'innerHTML'
+                    });
+                }
+            }
+        }
+    });
+</script>
+    
+<script>
+
+// Инициализация HTMX
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка кликов по подкатегориям
+    document.querySelectorAll('.subtheme').forEach(item => {
+        item.addEventListener('click', function() {
+            const category = this.closest('.theme-category').dataset.categoryId;
+            const subcategory = this.dataset.subthemeId;
+            
+            // Обновляем активный элемент
+            document.querySelectorAll('.subtheme').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Обновляем заголовок
+            document.querySelector('.content-header').textContent = `Вопросы по ${this.textContent}`;
+            
+            // Загружаем вопросы через HTMX
+            const questionsContainer = document.getElementById('questionsContainer');
+            questionsContainer.setAttribute(
+                'hx-get', 
+                `/htmx/questions?category=${category}&subcategory=${subcategory}`
+            );
+            questionsContainer.innerHTML = '<div class="loading">Загрузка...</div>';
+            htmx.trigger(questionsContainer, 'questionsChanged');
+            
+            // Закрываем мобильное меню, если оно открыто
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu.style.display === 'block') {
+                mobileMenu.style.display = 'none';
+            }
+        });
+    });
+    
+    // Обработка лайков/дизлайков (добавляем hx-post)
+    document.getElementById('questionsContainer').addEventListener('click', function(e) {
+        if (e.target.closest('.like-btn, .dislike-btn')) {
+            const btn = e.target.closest('.like-btn, .dislike-btn');
+            const isLike = btn.classList.contains('like-btn');
+            const card = btn.closest('.question-card');
+            const questionId = card.dataset.questionId;
+            
+            // Добавляем атрибуты HTMX
+            btn.setAttribute('hx-post', '/vote');
+            btn.setAttribute('hx-trigger', 'click');
+            btn.setAttribute('hx-target', `[data-question-id="${questionId}"]`);
+            btn.setAttribute('hx-swap', 'outerHTML');
+            btn.setAttribute('hx-vals', JSON.stringify({
+                question_id: questionId,
+                vote_type: isLike ? 'like' : 'dislike'
+            }));
+        }
+    });
+});
+
+    // Инициализация мобильного меню (единый обработчик)
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        // Обработчик для кнопки меню
+        mobileMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Предотвращаем всплытие события
+            mobileMenu.style.display = mobileMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Закрытие меню при клике вне его области
+        document.addEventListener('click', function(e) {
+            if (!mobileMenu.contains(e.target) && e.target !== mobileMenuBtn) {
+                mobileMenu.style.display = 'none';
+            }
+        });
+
+        // Обработка кликов по категориям (раскрытие/скрытие подкатегорий)
+        document.querySelectorAll('.theme-main').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Проверяем, не был ли клик на подкатегории
+                if (!e.target.classList.contains('subtheme')) {
+                    const category = this.closest('.theme-category');
+                    category.classList.toggle('active');
+                    e.stopPropagation(); // Предотвращаем закрытие меню
+                }
+            });
+        });
+
+        // Обработка кликов по подкатегориям
+        document.querySelectorAll('.subtheme').forEach(item => {
+            item.addEventListener('click', function() {
+                const category = this.closest('.theme-category').dataset.categoryId;
+                const subcategory = this.dataset.subthemeId;
+                
+                // Обновляем активный элемент
+                document.querySelectorAll('.subtheme').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Перенаправляем на страницу с вопросами по выбранной теме
+                window.location.href = `/questions/${category}/${subcategory}`;
+            });
+        });
+
+        // Инициализация активной темы
+        const pathParts = window.location.pathname.split('/');
+        if (pathParts.length >= 4 && pathParts[1] === 'questions') {
+            const category = pathParts[2];
+            const subcategory = pathParts[3];
+            
+            // Находим и активируем соответствующую подтему
+            const subtheme = document.querySelector(`.subtheme[data-subtheme-id="${subcategory}"]`);
+            if (subtheme) {
+                document.querySelectorAll('.subtheme').forEach(el => el.classList.remove('active'));
+                subtheme.classList.add('active');
+                
+                // Активируем родительскую категорию
+                const categoryEl = subtheme.closest('.theme-category');
+                if (categoryEl) {
+                    categoryEl.classList.add('active');
+                }
+            }
+        }
+    });
+
+// Обработка лайков/дизлайков
+document.getElementById('questionsContainer').addEventListener('click', function(e) {
+    const btn = e.target.closest('.like-btn, .dislike-btn');
+    if (!btn) return;
+    
+    const isLike = btn.classList.contains('like-btn');
+    const card = btn.closest('.question-card');
+    const questionId = card.dataset.questionId;
+    const voteType = isLike ? 'like' : 'dislike';
+    
+    // Блокируем кнопку на время запроса
+    btn.disabled = true;
+    
+    vote(questionId, voteType).finally(() => {
+        btn.disabled = false;
+    });
+});
+
+async function vote(questionId, voteType) {
+    try {
+        const response = await fetch('/vote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include', // Важно для передачи сессии
+            body: JSON.stringify({
+                question_id: questionId,
+                vote_type: voteType
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем UI
+            const card = document.querySelector(`.question-card[data-question-id="${questionId}"]`);
+            if (card) {
+                card.querySelector('.likes-count').textContent = data.likes;
+                card.querySelector('.dislikes-count').textContent = data.dislikes;
+                
+                // Обновляем состояние кнопок
+                updateVoteButtons(card, data.user_vote);
+            }
+        } else {
+            console.error('Vote failed:', data.error);
+            alert('Failed to vote: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error occurred while voting');
+    }
+}
+
+function updateVoteButtons(card, userVote) {
+    const likeBtn = card.querySelector('.like-btn');
+    const dislikeBtn = card.querySelector('.dislike-btn');
+    
+    // Сбрасываем все активные состояния
+    likeBtn.classList.remove('active');
+    dislikeBtn.classList.remove('active');
+    
+    // Устанавливаем активное состояние для текущего голоса
+    if (userVote === 'like') {
+        likeBtn.classList.add('active');
+    } else if (userVote === 'dislike') {
+        dislikeBtn.classList.add('active');
+    }
+}
+
+    // Функция показа уведомлений
+    function showNotification(message, type) {
+        const container = document.getElementById('notification-container');
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
+            ${message}
+        `;
+        container.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 1000);
+        }, 3000);
+    }
+</script>
+<script src="/static/js/htmx.min.js"></script>
+</body>
+</html>

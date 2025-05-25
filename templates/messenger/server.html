@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Modern Clone</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Сброс и базовые стили */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        :root {
+            --primary: #5865f2;
+            --primary-hover: #4752c4;
+            --text-normal: #dbdee1;
+            --text-muted: #a3a6aa;
+            --background-primary: #313338;
+            --background-secondary: #2b2d31;
+            --background-tertiary: #1e1f22;
+            --background-accent: #4e5058;
+            --background-floating: #18191c;
+            --interactive-normal: #b5bac1;
+            --interactive-hover: #dbdee1;
+            --interactive-active: #ffffff;
+            --header-primary: #f2f3f5;
+            --header-secondary: #b5bac1;
+        }
+        
+        body {
+            font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--background-primary);
+            color: var(--text-normal);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Панель серверов */
+        .guilds-panel {
+            width: 72px;
+            background: #1e1f22;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            align-items: center;
+            padding-top: 12px;
+        }
+
+        .guilds-scroll {
+            flex: 1;
+            overflow-y: auto;
+            width: 100%;
+            scrollbar-width: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .guilds-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .guild-separator {
+            height: 2px;
+            width: 32px;
+            margin: 8px 0;
+            background: rgba(79, 84, 92, 0.48);
+            border-radius: 1px;
+        }
+
+        .guild-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
+            border-radius: 50%;
+            background: var(--background-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            color: var(--interactive-normal);
+        }
+
+        .guild-icon:hover {
+            border-radius: 16px;
+            background: var(--primary);
+            color: white;
+        }
+
+        .guild-icon.active {
+            border-radius: 16px;
+            background: var(--primary);
+            color: white;
+        }
+
+        .guild-icon.active::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 8px;
+            height: 32px;
+            width: 4px;
+            background: white;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .guild-icon.add {
+            background: var(--background-accent);
+            color: var(--primary);
+        }
+
+        .guild-icon.add:hover {
+            background: var(--background-accent);
+            color: var(--primary-hover);
+        }
+
+        /* Панель аккаунта */
+        .account-panel {
+            padding: 10px;
+            background: #232428;
+            display: flex;
+            align-items: center;
+            position: relative;
+            width: 240px;
+            box-sizing: border-box;
+        }
+
+        .avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .avatar-small:hover {
+            transform: scale(1.05);
+        }
+
+        .user-info {
+            flex: 1;
+            cursor: pointer;
+            min-width: 0;
+        }
+
+        .username {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--header-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .discriminator {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .account-controls {
+            display: flex;
+            color: var(--text-muted);
+        }
+
+        .account-controls i {
+            padding: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .account-controls i:hover {
+            color: var(--interactive-hover);
+        }
+
+        /* Панель каналов */
+        .channels-panel {
+            width: 240px;
+            background: var(--background-secondary);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            color: var(--text-muted);
+        }
+
+        .server-header {
+            height: 48px;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--background-tertiary);
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            color: var(--header-secondary);
+            transition: color 0.2s;
+        }
+
+        .server-header:hover {
+            color: var(--header-primary);
+        }
+
+        .channels-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 8px;
+            scrollbar-width: thin;
+        }
+
+        .channels-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .channels-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .channels-scroll::-webkit-scrollbar-thumb {
+            background: var(--background-tertiary);
+            border-radius: 3px;
+        }
+
+        .channel-category {
+            padding: 16px 16px 0 16px;
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category-collapse {
+            margin-right: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .category-collapse.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .channel {
+            padding: 6px 16px;
+            margin-left: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            height: 32px;
+            transition: all 0.2s;
+            color: var(--interactive-normal);
+            position: relative;
+        }
+
+        .channel:hover {
+            background: var(--background-accent);
+            color: var(--interactive-hover);
+        }
+
+        .channel.active {
+            background: var(--background-accent);
+            color: var(--interactive-active);
+        }
+
+        .channel i {
+            margin-right: 6px;
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .channel.unread {
+            color: var(--interactive-active);
+            font-weight: 500;
+        }
+
+        .channel.unread::after {
+            content: '';
+            position: absolute;
+            right: 16px;
+            width: 8px;
+            height: 8px;
+            background: var(--interactive-active);
+            border-radius: 50%;
+        }
+
+        /* Основной чат */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--background-primary);
+            position: relative;
+        }
+
+        /* Панель участников */
+        .members-panel {
+            width: 240px;
+            background: var(--background-secondary);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: transform 0.2s;
+        }
+
+        .members-header {
+            height: 48px;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--background-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .members-close {
+            cursor: pointer;
+            color: var(--interactive-normal);
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .members-close:hover {
+            color: var(--interactive-hover);
+        }
+
+        .members-search {
+            padding: 8px 16px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--background-tertiary);
+            border: none;
+            border-radius: 4px;
+            padding: 6px 8px 6px 28px;
+            color: var(--text-normal);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 24px;
+            top: 14px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .members-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 8px 0 16px;
+            scrollbar-width: thin;
+        }
+
+        .members-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .members-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .members-scroll::-webkit-scrollbar-thumb {
+            background: var(--background-tertiary);
+            border-radius: 3px;
+        }
+
+        .member-group {
+            margin-bottom: 16px;
+        }
+
+        .group-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            user-select: none;
+        }
+
+        .member {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 1px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .member:hover {
+            background: var(--background-accent);
+        }
+
+        .member-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .member-status {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 3px solid var(--background-secondary);
+        }
+
+        .member-status.online {
+            background: #23a55a;
+        }
+
+        .member-status.idle {
+            background: #f0b232;
+        }
+
+        .member-status.dnd {
+            background: #f23f43;
+        }
+
+        .member-status.offline {
+            background: #80848e;
+        }
+
+        .member-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .member-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--interactive-active);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .member-activity {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Панель сообщений */
+        .messages-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            scrollbar-width: thin;
+        }
+
+        .messages-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-panel::-webkit-scrollbar-track {
+            background: var(--background-secondary);
+            border-radius: 4px;
+        }
+
+        .messages-panel::-webkit-scrollbar-thumb {
+            background: var(--background-tertiary);
+            border-radius: 4px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            position: relative;
+            padding-left: 56px;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .message-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        .message-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 4px;
+            line-height: 1.375;
+            flex-wrap: wrap;
+        }
+
+        .message-username {
+            font-weight: 600;
+            color: var(--interactive-active);
+            margin-right: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .message-username:hover {
+            text-decoration: underline;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .message-badge {
+            margin-left: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--background-accent);
+            padding: 2px 4px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .message-badge i {
+            margin-right: 4px;
+            font-size: 10px;
+        }
+
+        .message-text {
+            font-size: 16px;
+            line-height: 1.375;
+            word-wrap: break-word;
+            color: var(--text-normal);
+        }
+
+        .message-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .reaction {
+            display: flex;
+            align-items: center;
+            padding: 2px 6px;
+            background: var(--background-tertiary);
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.1s;
+        }
+
+        .reaction:hover {
+            background: var(--background-accent);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .reaction.active {
+            background: rgba(88, 101, 242, 0.2);
+            border-color: var(--primary);
+        }
+
+        .reaction-count {
+            margin-left: 4px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .thread-badge {
+            display: flex;
+            align-items: center;
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .thread-badge:hover {
+            color: var(--interactive-hover);
+        }
+
+        .thread-badge i {
+            margin-right: 4px;
+            font-size: 10px;
+        }
+
+        /* Ввод сообщения */
+        .input-panel {
+            padding: 0 16px 16px;
+            background: var(--background-primary);
+        }
+
+        .input-container {
+            background: var(--background-tertiary);
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-buttons {
+            display: flex;
+            color: var(--text-muted);
+            margin-right: 8px;
+        }
+
+        .input-button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .input-button:hover {
+            color: var(--interactive-hover);
+            background: var(--background-accent);
+        }
+
+        .input-box {
+            flex: 1;
+            padding-left: 0;
+        }
+
+        .input-box textarea {
+            background: transparent;
+            border: none;
+            width: 100%;
+            color: var(--text-normal);
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            max-height: 200px;
+            font-family: inherit;
+            line-height: 1.375;
+            padding: 0;
+            min-height: 20px;
+        }
+
+        .input-box textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-right-buttons {
+            margin-left: 8px;
+            display: flex;
+            color: var(--text-muted);
+        }
+
+        /* Nitro промо */
+        .nitro-promo {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            color: var(--interactive-normal);
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: auto;
+            transition: all 0.2s;
+        }
+
+        .nitro-promo:hover {
+            color: var(--interactive-hover);
+            background: var(--background-accent);
+        }
+
+        .nitro-promo i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        /* Состояния */
+        .members-hidden .members-panel {
+            transform: translateX(100%);
+        }
+
+        .members-hidden .toggle-members {
+            right: -16px;
+        }
+        
+        /* Контейнер для панели каналов и аккаунта */
+        .channels-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 240px;
+        }
+
+        /* Новые элементы */
+        .channel-mention {
+            background: rgba(88, 101, 242, 0.3);
+            color: var(--primary);
+            padding: 0 2px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .channel-mention:hover {
+            background: rgba(88, 101, 242, 0.4);
+            color: var(--primary-hover);
+        }
+
+        .unread-messages-bar {
+            position: relative;
+            height: 24px;
+            margin: 16px 16px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .unread-messages-bar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(79, 84, 92, 0.48);
+        }
+
+        .unread-messages-text {
+            background: var(--background-primary);
+            position: relative;
+            z-index: 1;
+            padding: 0 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- Панель серверов -->
+    <div class="guilds-panel">
+        <div class="guilds-scroll">
+            <div class="guild-icon active">
+                <i class="fab fa-discord"></i>
+            </div>
+            <div class="guild-separator"></div>
+            <div class="guild-icon">🎮</div>
+            <div class="guild-icon">🤖</div>
+            <div class="guild-icon">🚀</div>
+            <div class="guild-icon">🎵</div>
+            <div class="guild-icon add">
+                <i class="fas fa-plus"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контейнер для панели каналов и аккаунта -->
+    <div class="channels-container">
+        <!-- Панель каналов -->
+        <div class="channels-panel">
+            <div class="server-header">
+                Сервер Discord
+            </div>
+            <div class="channels-scroll">
+                <div class="channel-category">
+                    <i class="fas fa-chevron-down category-collapse"></i>
+                    <span>Текстовые каналы</span>
+                </div>
+                <div class="channel active">
+                    <i class="fas fa-hashtag"></i>
+                    <span>общий</span>
+                </div>
+                <div class="channel unread">
+                    <i class="fas fa-hashtag"></i>
+                    <span>музыка</span>
+                </div>
+                <div class="channel">
+                    <i class="fas fa-hashtag"></i>
+                    <span>игры</span>
+                </div>
+                <div class="channel">
+                    <i class="fas fa-hashtag"></i>
+                    <span>разработка</span>
+                </div>
+                
+                <div class="channel-category">
+                    <i class="fas fa-chevron-down category-collapse"></i>
+                    <span>Голосовые каналы</span>
+                </div>
+                <div class="channel">
+                    <i class="fas fa-volume-up"></i>
+                    <span>Общий чат</span>
+                </div>
+                <div class="channel">
+                    <i class="fas fa-volume-up"></i>
+                    <span>Музыка</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель аккаунта -->
+        <div class="account-panel">
+            <div class="avatar-small">U</div>
+            <div class="user-info">
+                <div class="username">User123</div>
+                <div class="discriminator">#0001</div>
+            </div>
+            <div class="account-controls">
+                <i class="fas fa-microphone"></i>
+                <i class="fas fa-headphones"></i>
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной интерфейс -->
+    <div class="chat-area">
+        <!-- Панель сообщений -->
+        <div class="messages-panel">
+            <div class="unread-messages-bar">
+                <div class="unread-messages-text">Непрочитанные сообщения</div>
+            </div>
+            
+            <div class="message">
+                <div class="message-avatar">A</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <div class="message-username">Admin</div>
+                        <div class="message-time">Сегодня в 12:34</div>
+                        <div class="message-badge">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Администратор</span>
+                        </div>
+                    </div>
+                    <div class="message-text">
+                        Добро пожаловать на сервер! Это современная копия интерфейса Discord с актуальными элементами.
+                    </div>
+                    <div class="message-reactions">
+                        <div class="reaction">
+                            👍 <span class="reaction-count">3</span>
+                        </div>
+                        <div class="reaction">
+                            ❤️ <span class="reaction-count">1</span>
+                        </div>
+                        <div class="reaction">
+                            😄 <span class="reaction-count">2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="message">
+                <div class="message-avatar">U</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <div class="message-username">User123</div>
+                        <div class="message-time">Сегодня в 12:35</div>
+                    </div>
+                    <div class="message-text">
+                        Привет всем! Вот что нового в этом клоне:
+                        <br><br>
+                        🔥 <span class="channel-mention">#общий</span> - теперь с реакциями<br>
+                        🧵 Поддержка ниток сообщений<br>
+                        🎨 Обновленная цветовая схема<br>
+                        ✨ Более плавные анимации<br>
+                        💬 Улучшенный ввод сообщений
+                    </div>
+                    <div class="thread-badge">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>3 ответа — Последний сегодня в 12:40</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="message">
+                <div class="message-avatar">B</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <div class="message-username">Bot</div>
+                        <div class="message-time">Сейчас</div>
+                        <div class="message-badge">
+                            <i class="fas fa-robot"></i>
+                            <span>Бот</span>
+                        </div>
+                    </div>
+                    <div class="message-text">
+                        Привет! Я бот этого сервера. Вот что вы можете сделать:
+                        <br><br>
+                        • Нажимать на реакции под сообщениями<br>
+                        • Открывать нитки (попробуйте кликнуть на "3 ответа")<br>
+                        • Скрывать панель участников кнопкой →
+                    </div>
+                    <div class="message-reactions">
+                        <div class="reaction active">
+                            🤖 <span class="reaction-count">5</span>
+                        </div>
+                        <div class="reaction">
+                            ❓ <span class="reaction-count">1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ввод сообщения -->
+        <div class="input-panel">
+            <div class="input-container">
+                <div class="input-buttons">
+                    <button class="input-button">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="input-button">
+                        <i class="fas fa-gift"></i>
+                    </button>
+                    <button class="input-button">
+                        <i class="fas fa-grin"></i>
+                    </button>
+                    <button class="input-button">
+                        <i class="fas fa-at"></i>
+                    </button>
+                </div>
+                <div class="input-box">
+                    <textarea placeholder="Написать сообщение в #общий" rows="1"></textarea>
+                </div>
+                <div class="input-right-buttons">
+                    <button class="input-button">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Панель участников -->
+    <div class="members-panel">
+        <div class="members-header">
+            <span>УЧАСТНИКИ — 4</span>
+            <i class="fas fa-search members-close"></i>
+        </div>
+        <div class="members-search">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Поиск">
+        </div>
+        <div class="members-scroll">
+            <div class="member-group">
+                <div class="group-title">ОНЛАЙН — 3</div>
+                <div class="member">
+                    <div class="member-avatar">
+                        A
+                        <div class="member-status online"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Admin</div>
+                        <div class="member-activity">Discord Clone</div>
+                    </div>
+                </div>
+                <div class="member">
+                    <div class="member-avatar">
+                        U
+                        <div class="member-status online"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">User123</div>
+                        <div class="member-activity">Пишет сообщение</div>
+                    </div>
+                </div>
+                <div class="member">
+                    <div class="member-avatar">
+                        D
+                        <div class="member-status idle"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Developer</div>
+                        <div class="member-activity">Visual Studio Code</div>
+                    </div>
+                </div>
+            </div>
+            <div class="member-group">
+                <div class="group-title">ОФФЛАЙН — 1</div>
+                <div class="member">
+                    <div class="member-avatar">
+                        B
+                        <div class="member-status offline"></div>
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">Bot</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nitro-promo">
+            <i class="fas fa-bolt"></i>
+            <span>Подписка Nitro</span>
+        </div>
+    </div>
+
+    <!-- Кнопка скрытия панели участников -->
+    <div class="toggle-members" onclick="document.body.classList.toggle('members-hidden')">
+        <i class="fas fa-chevron-left"></i>
+    </div>
+
+    <script>
+        // Логика для динамического изменения высоты textarea
+        const textarea = document.querySelector('textarea');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Логика переключения каналов
+        document.querySelectorAll('.channel').forEach(channel => {
+            channel.addEventListener('click', function() {
+                document.querySelectorAll('.channel').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelector('textarea').placeholder = 
+                    `Написать сообщение в ${this.querySelector('span').textContent}`;
+            });
+        });
+
+        // Логика сворачивания категорий
+        document.querySelectorAll('.category-collapse').forEach(icon => {
+            icon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.classList.toggle('collapsed');
+                // Здесь должна быть логика скрытия каналов категории
+            });
+        });
+
+        // Логика реакций
+        document.querySelectorAll('.reaction').forEach(reaction => {
+            reaction.addEventListener('click', function() {
+                const count = this.querySelector('.reaction-count');
+                if (this.classList.contains('active')) {
+                    count.textContent = parseInt(count.textContent) - 1;
+                    this.classList.remove('active');
+                } else {
+                    count.textContent = parseInt(count.textContent) + 1;
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Логика ниток
+        document.querySelector('.thread-badge').addEventListener('click', function() {
+            alert('Здесь должна открываться нитка сообщений');
+        });
+
+        // Логика Nitro промо
+        document.querySelector('.nitro-promo').addEventListener('click', function() {
+            alert('Реклама Nitro!');
+        });
+
+        // Имитация загрузки новых сообщений
+        setTimeout(() => {
+            const messagesPanel = document.querySelector('.messages-panel');
+            const newMessage = document.createElement('div');
+            newMessage.className = 'message';
+            newMessage.innerHTML = `
+                <div class="message-avatar">D</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <div class="message-username">Developer</div>
+                        <div class="message-time">Сейчас</div>
+                    </div>
+                    <div class="message-text">
+                        Кстати, панель участников можно скрыть кнопкой слева →
+                    </div>
+                    <div class="message-reactions">
+                        <div class="reaction">
+                            👍 <span class="reaction-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesPanel.appendChild(newMessage);
+            messagesPanel.scrollTop = messagesPanel.scrollHeight;
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+    "roles": {
+        "user": {
+            "post": true,
+            "comment": true,
+            "edit_own": true,
+            "delete_own": true,
+            "like": true,
+            "upload_file": false,
+            "color": "#666666"
+        },
+        "vip": {
+            "post": true,
+            "comment": true,
+            "edit_own": true,
+            "delete_own": true,
+            "like": true,
+            "upload_file": true,
+            "private_access": true,
+            "color": "#FFD700"
+        },
+        "moderator": {
+            "post": true,
+            "comment": true,
+            "edit_any": true,
+            "delete_any": true,
+            "like": true,
+            "upload_file": true,
+            "mute": true,
+            "temp_ban": true,
+            "color": "#4169E1"
+        },
+        "admin": {
+            "post": true,
+            "comment": true,
+            "edit_any": true,
+            "delete_any": true,
+            "like": true,
+            "upload_file": true,
+            "mute": true,
+            "perm_ban": true,
+            "ip_ban": true,
+            "manage_roles": true,
+            "color": "#FF0000"
+        },
+        "muted": {
+            "post": false,
+            "comment": false,
+            "view": true,
+            "color": "#AAAAAA"
+        },
+        "banned": {
+            "post": false,
+            "comment": false,
+            "view": false,
+            "color": "#000000"
+        }
+    },
+    "assign_rules": {
+        "vip": ["moderator", "admin"],
+        "moderator": ["admin"],
+        "admin": ["root"],
+        "muted": ["moderator", "admin"],
+        "banned": ["admin"]
+    }
+}

@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/dnet.png') }}">
+    <!-- Подсветка синтаксиса -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
+    <!-- Добавьте другие языки по необходимости -->
+    <!-- ACE Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.2/ext-language_tools.js"></script>
+
+   <!-- Marked.js для Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>DNet ▏ Создать вопрос</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(to right, #4facfe, #00f2fe);
+            --primary-color: #4facfe;
+            --bg-dark: rgba(10, 15, 25, 0.7);
+            --border-color: rgba(0, 120, 255, 0.2);
+            --danger-gradient: linear-gradient(to right, #ff4d4d, #cc0000);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #0a0a0a;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 40, 80, 0.2) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 60, 120, 0.2) 0%, transparent 20%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Общий контейнер */
+        .container {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Левая панель с темами (ПК версия) */
+        .themes-sidebar {
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border-color);
+            backdrop-filter: blur(15px);
+            padding: 15px;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        /* Мобильное меню */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #111;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-dark);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 60px 15px 15px;
+            z-index: 999;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* Общие стили для тем и подтем */
+        .themes-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .theme-category {
+            margin-bottom: 12px;
+        }
+
+        .theme-main {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+
+        .theme-main:hover {
+            background: rgba(0, 120, 255, 0.1);
+        }
+
+        .theme-main i {
+            margin-right: 8px;
+            font-size: 12px;
+            color: var(--primary-color);
+            min-width: 16px;
+            text-align: center;
+        }
+
+        .subthemes {
+            padding-left: 16px;
+            border-left: 1px solid var(--border-color);
+            margin-left: 8px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .theme-category.active .subthemes {
+            max-height: 500px;
+        }
+
+        .subtheme {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 5px 8px;
+            border-radius: 4px;
+            display: block;
+        }
+
+        .subtheme:hover {
+            background: rgba(0, 120, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .subtheme.active {
+            background: rgba(0, 120, 255, 0.2);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Основное содержимое */
+        .content {
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .content-header {
+            font-size: 22px;
+            margin-bottom: 20px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            background-color: rgba(10, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 10px 0;
+            z-index: 5;
+        }
+
+        /* Форма создания вопроса */
+        .create-question-form {
+            background: rgba(10, 15, 25, 0.4);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(10, 15, 25, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .select-theme {
+            position: relative;
+        }
+
+        .select-theme select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234facfe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 12px;
+            padding-right: 35px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #111;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 60, 120, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        /* Панель пользователя */
+        .user-panel {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(10, 15, 25, 0.9);
+            border: 1px solid rgba(0, 120, 255, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            min-width: auto;
+            transition: all 0.3s ease;
+            gap: 15px;
+        }
+
+        .user-panel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 60, 120, 0.3);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #111;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .settings-btn:hover {
+            color: var(--primary-color);
+            transform: rotate(30deg);
+        }
+
+        .settings-icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1A1F2C;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .tooltip:after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 4px;
+            border-style: solid;
+            border-color: #1A1F2C transparent transparent transparent;
+        }
+
+        .settings-container {
+            position: relative;
+        }
+
+        .settings-container:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Модальные окна */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-container {
+            position: relative;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            z-index: 2;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            margin-bottom: 25px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+        }
+
+        .notification.error {
+            background: linear-gradient(to right, #f44336, #c62828);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .themes-sidebar {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .content {
+                padding-top: 60px;
+            }
+            
+            .content-header {
+                font-size: 20px;
+                position: static;
+                background-color: transparent;
+                backdrop-filter: none;
+            }
+            
+            .user-panel {
+                bottom: 15px;
+                right: 15px;
+                min-width: 160px;
+            }
+            
+            .create-question-form {
+                padding: 15px;
+                gap: 20px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+            }
+            
+            .modal-footer button {
+                width: 100%;
+            }
+        }
+
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 120, 255, 0.4);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 120, 255, 0.6);
+        }
+
+        /* Ошибки формы */
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+/* Система уведомлений */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.notification {
+    background: rgba(15, 20, 30, 0.95);
+    color: #fff;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 120, 255, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 60, 120, 0.3);
+    display: flex;
+    align-items: center;
+    max-width: 350px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: fadeIn 1.5s ease-out;
+    transition: all 1.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #4facfe, #00f2fe);
+}
+
+.notification i {
+    margin-right: 12px;
+    font-size: 18px;
+}
+
+/* Типы уведомлений */
+.notification.success {
+    border-color: rgba(46, 213, 115, 0.3);
+}
+
+.notification.success::before {
+    background: linear-gradient(to bottom, #2ed573, #7bed9f);
+}
+
+.notification.error {
+    border-color: rgba(255, 71, 87, 0.3);
+}
+
+.notification.error::before {
+    background: linear-gradient(to bottom, #ff4757, #ff6b81);
+}
+
+.notification.info {
+    border-color: rgba(0, 150, 255, 0.3);
+}
+
+.notification.info::before {
+    background: linear-gradient(to bottom, #4facfe, #00f2fe);
+}
+
+/* Анимация исчезновения */
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100%); }
+}
+
+.notification.fade-out {
+    animation: fadeOut 0.3s ease-in forwards;
+}
+
+.form-control[type="file"] {
+    padding: 8px;
+    background: rgba(10, 15, 25, 0.3);
+    border: 1px dashed var(--border-color);
+    cursor: pointer;
+}
+
+.form-control[type="file"]:hover {
+    border-color: var(--primary-color);
+}
+
+.form-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 5px;
+}
+
+/* Оптимизация для слабых устройств */
+@media (max-width: 768px) {
+    .form-control[type="file"] {
+        font-size: 14px; /* Увеличиваем шрифт для мобильных */
+    }
+}
+
+.upload-progress {
+    margin-top: 10px;
+    background: rgba(0, 120, 255, 0.1);
+    border-radius: 8px;
+    padding: 5px;
+}
+
+.progress-bar {
+    height: 10px;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    border-radius: 5px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-left: 10px;
+}
+
+/* Общие стили для улучшенной формы */
+.required:after {
+    content: " *";
+    color: #f44336;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 5px;
+}
+
+.char-counter span {
+    font-weight: 500;
+}
+
+/* Стили для редактора */
+.editor-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.editor-toolbar button {
+    background: rgba(0, 120, 255, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 5px 10px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.editor-toolbar button:hover {
+    background: rgba(0, 120, 255, 0.2);
+}
+
+.editor-toolbar button i {
+    margin-right: 5px;
+}
+
+.markdown-preview {
+    background: rgba(10, 15, 25, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.markdown-preview pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+
+.markdown-preview code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+/* Стили для загрузки файлов */
+.file-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 15px;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background: rgba(0, 120, 255, 0.05);
+}
+
+.file-upload-area i {
+    font-size: 40px;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.file-upload-area p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.file-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.file-preview {
+    background: rgba(10, 15, 25, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.file-preview:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.file-preview img {
+    max-width: 100%;
+    max-height: 80px;
+    display: block;
+    margin: 0 auto 5px;
+    border-radius: 4px;
+}
+
+.file-preview .file-icon {
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 5px;
+    color: var(--primary-color);
+}
+
+.file-preview .file-name {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.file-preview .file-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.file-preview:hover .file-remove {
+    opacity: 1;
+}
+
+/* Стили для системы тегов */
+.tags-container {
+    position: relative;
+}
+
+.selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.tag {
+    background: rgba(0, 120, 255, 0.2);
+    border-radius: 15px;
+    padding: 5px 10px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.tag-remove {
+    margin-left: 5px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.tag-remove:hover {
+    color: #f44336;
+}
+
+.tags-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 0 0 8px 8px;
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.tag-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.tag-suggestion:hover {
+    background: rgba(0, 120, 255, 0.2);
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .file-previews {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .editor-toolbar {
+        gap: 5px;
+    }
+    
+    .editor-toolbar button {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+    
+    .file-upload-area {
+        padding: 20px;
+    }
+    
+    .file-upload-area i {
+        font-size: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .editor-toolbar button span {
+        display: none;
+    }
+    
+    .editor-toolbar button i {
+        margin-right: 0;
+    }
+    
+    .file-previews {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
+}
+
+/* Стили для модального окна редактора кода */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+  background-color: #1e1e1e;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #333;
+  width: 80%;
+  max-width: 900px;
+  border-radius: 8px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #fff;
+}
+
+/* Стили для подсветки кода в предпросмотре */
+.markdown-preview pre {
+  background: #1e1e1e;
+  padding: 15px;
+  border-radius: 5px;
+  overflow-x: auto;
+  border-left: 4px solid #4facfe;
+}
+
+.markdown-preview code {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(0,0,0,0.2);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Стили для ACE Editor */
+.ace_editor {
+  font-size: 14px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #111;
+    overflow: hidden; /* Добавлено для корректного отображения изображения */
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="notification-container"></div> <!-- УВЕДОМЛЕНИЯ -->
+    <!-- Кнопка мобильного меню -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i> Темы
+    </button>
+
+    <!-- Мобильное меню -->
+    <div class="mobile-menu" id="mobileMenu">
+        <h2 class="themes-title">Все темы</h2>
+        
+        <div class="theme-category active" data-category-id="programming">
+            <div class="theme-main">
+                <i class="fas fa-code"></i> Программирование
+            </div>
+            <div class="subthemes">
+                <a href="/questions/programming/javascript" class="subtheme active">JavaScript</a>
+                <a href="/questions/programming/python" class="subtheme">Python</a>
+                <a href="/questions/programming/java" class="subtheme">Java</a>
+                <a href="/questions/programming/cpp" class="subtheme">C/C++</a>
+                <a href="/questions/programming/csharp" class="subtheme">C#</a>
+                <a href="/questions/programming/go" class="subtheme">Go</a>
+                <a href="/questions/programming/ruby" class="subtheme">Ruby</a>
+                <a href="/questions/programming/php" class="subtheme">PHP</a>
+                <a href="/questions/programming/swift" class="subtheme">Swift</a>
+                <a href="/questions/programming/kotlin" class="subtheme">Kotlin</a>
+                <a href="/questions/programming/assembler" class="subtheme">Assembler</a>
+                <a href="/questions/programming/typescript" class="subtheme">TypeScript</a>
+                <a href="/questions/programming/rust" class="subtheme">Rust</a>
+            </div>
+        </div>
+        
+        <div class="theme-category" data-category-id="data-analysis">
+            <div class="theme-main">
+                <i class="fas fa-chart-line"></i> Анализ данных
+            </div>
+            <div class="subthemes">
+                <a href="/questions/data-analysis/sql" class="subtheme">SQL</a>
+                <a href="/questions/data-analysis/pandas" class="subtheme">Pandas</a>
+                <a href="/questions/data-analysis/numpy" class="subtheme">NumPy</a>
+                <a href="/questions/data-analysis/ml" class="subtheme">Машинное обучение</a>
+                <a href="/questions/data-analysis/analytics" class="subtheme">Аналитика</a>
+                <a href="/questions/data-analysis/bigdata" class="subtheme">Big Data</a>
+            </div>
+        </div>
+        
+        <div class="theme-category" data-category-id="design">
+            <div class="theme-main">
+                <i class="fas fa-paint-brush"></i> Дизайн
+            </div>
+            <div class="subthemes">
+                <a href="/questions/design/uiux" class="subtheme">UI/UX</a>
+                <a href="/questions/design/figma" class="subtheme">Figma</a>
+                <a href="/questions/design/photoshop" class="subtheme">Adobe Photoshop</a>
+                <a href="/questions/design/illustrator" class="subtheme">Illustrator</a>
+                <a href="/questions/design/webdesign" class="subtheme">Web Design</a>
+                <a href="/questions/design/mobiledesign" class="subtheme">Mobile Design</a>
+            </div>
+        </div>
+
+        <div class="theme-category" data-category-id="devops">
+            <div class="theme-main">
+                <i class="fas fa-server"></i> DevOps
+            </div>
+            <div class="subthemes">
+                <a href="/questions/devops/docker" class="subtheme">Docker</a>
+                <a href="/questions/devops/kubernetes" class="subtheme">Kubernetes</a>
+                <a href="/questions/devops/cicd" class="subtheme">CI/CD</a>
+                <a href="/questions/devops/aws" class="subtheme">AWS</a>
+                <a href="/questions/devops/azure" class="subtheme">Azure</a>
+                <a href="/questions/devops/sysadmin" class="subtheme">Системное Администрирование</a>
+            </div>
+        </div>
+
+        <div class="theme-category" data-category-id="mobile">
+            <div class="theme-main">
+                <i class="fas fa-mobile-alt"></i> Мобильная разработка
+            </div>
+            <div class="subthemes">
+                <a href="/questions/mobile/android" class="subtheme">Android</a>
+                <a href="/questions/mobile/ios" class="subtheme">iOS</a>
+                <a href="/questions/mobile/flutter" class="subtheme">Flutter</a>
+                <a href="/questions/mobile/reactnative" class="subtheme">React Native</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контейнер -->
+    <div class="container">
+        <!-- Левая панель с темами (ПК версия) -->
+        <div class="themes-sidebar" id="desktopMenu">
+            <h2 class="themes-title">Все темы</h2>
+            
+            <div class="theme-category active" data-category-id="programming">
+                <div class="theme-main">
+                    <i class="fas fa-code"></i> Программирование
+                </div>
+                <div class="subthemes">
+                    <a href="/questions/programming/javascript" class="subtheme active">JavaScript</a>
+                    <a href="/questions/programming/python" class="subtheme">Python</a>
+                    <a href="/questions/programming/java" class="subtheme">Java</a>
+                    <a href="/questions/programming/cpp" class="subtheme">C/C++</a>
+                    <a href="/questions/programming/csharp" class="subtheme">C#</a>
+                    <a href="/questions/programming/go" class="subtheme">Go</a>
+                    <a href="/questions/programming/ruby" class="subtheme">Ruby</a>
+                    <a href="/questions/programming/php" class="subtheme">PHP</a>
+                    <a href="/questions/programming/swift" class="subtheme">Swift</a>
+                    <a href="/questions/programming/kotlin" class="subtheme">Kotlin</a>
+                    <a href="/questions/programming/assembler" class="subtheme">Assembler</a>
+                    <a href="/questions/programming/typescript" class="subtheme">TypeScript</a>
+                    <a href="/questions/programming/rust" class="subtheme">Rust</a>
+                </div>
+            </div>
+            
+            <div class="theme-category" data-category-id="data-analysis">
+                <div class="theme-main">
+                    <i class="fas fa-chart-line"></i> Анализ данных
+                </div>
+                <div class="subthemes">
+                    <a href="/questions/data-analysis/sql" class="subtheme">SQL</a>
+                    <a href="/questions/data-analysis/pandas" class="subtheme">Pandas</a>
+                    <a href="/questions/data-analysis/numpy" class="subtheme">NumPy</a>
+                    <a href="/questions/data-analysis/ml" class="subtheme">Машинное обучение</a>
+                    <a href="/questions/data-analysis/analytics" class="subtheme">Аналитика</a>
+                    <a href="/questions/data-analysis/bigdata" class="subtheme">Big Data</a>
+                </div>
+            </div>
+            
+            <div class="theme-category" data-category-id="design">
+                <div class="theme-main">
+                    <i class="fas fa-paint-brush"></i> Дизайн
+                </div>
+                <div class="subthemes">
+                    <a href="/questions/design/uiux" class="subtheme">UI/UX</a>
+                    <a href="/questions/design/figma" class="subtheme">Figma</a>
+                    <a href="/questions/design/photoshop" class="subtheme">Adobe Photoshop</a>
+                    <a href="/questions/design/illustrator" class="subtheme">Illustrator</a>
+                    <a href="/questions/design/webdesign" class="subtheme">Web Design</a>
+                    <a href="/questions/design/mobiledesign" class="subtheme">Mobile Design</a>
+                </div>
+            </div>
+
+            <div class="theme-category" data-category-id="devops">
+                <div class="theme-main">
+                    <i class="fas fa-server"></i> DevOps
+                </div>
+                <div class="subthemes">
+                    <a href="/questions/devops/docker" class="subtheme">Docker</a>
+                    <a href="/questions/devops/kubernetes" class="subtheme">Kubernetes</a>
+                    <a href="/questions/devops/cicd" class="subtheme">CI/CD</a>
+                    <a href="/questions/devops/aws" class="subtheme">AWS</a>
+                    <a href="/questions/devops/azure" class="subtheme">Azure</a>
+                    <a href="/questions/devops/sysadmin" class="subtheme">Системное Администрирование</a>
+                </div>
+            </div>
+
+            <div class="theme-category" data-category-id="mobile">
+                <div class="theme-main">
+                    <i class="fas fa-mobile-alt"></i> Мобильная разработка
+                </div>
+                <div class="subthemes">
+                    <a href="/questions/mobile/android" class="subtheme">Android</a>
+                    <a href="/questions/mobile/ios" class="subtheme">iOS</a>
+                    <a href="/questions/mobile/flutter" class="subtheme">Flutter</a>
+                    <a href="/questions/mobile/reactnative" class="subtheme">React Native</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основное содержимое -->
+        <div class="content">
+            <h1 class="content-header">Создать новый вопрос</h1>
+            
+            <form id="createQuestionForm" class="create-question-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="questionTitle" class="form-label required">Заголовок вопроса</label>
+                    <input type="text" id="questionTitle" name="title" class="form-control" 
+                           placeholder="Сформулируйте ваш вопрос четко и кратко" required maxlength="120">
+                    <div class="char-counter"><span id="titleCounter">0</span>/120</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="questionDetails" class="form-label required">Подробное описание</label>
+                    <div class="editor-toolbar">
+                        <button type="button" data-format="bold" title="Жирный текст"><i class="fas fa-bold"></i></button>
+                        <button type="button" data-format="italic" title="Курсив"><i class="fas fa-italic"></i></button>
+                        <button type="button" data-format="code" title="Код"><i class="fas fa-code"></i></button>
+                        <button type="button" data-format="link" title="Ссылка"><i class="fas fa-link"></i></button>
+                        <button type="button" id="previewBtn" title="Предпросмотр"><i class="fas fa-eye"></i> Предпросмотр</button>
+                    </div>
+                    <textarea id="questionDetails" name="content" class="form-control" 
+                              placeholder="Опишите проблему подробно, приведите примеры кода, ошибки и т.д." 
+                              required></textarea>
+                    <div class="char-counter"><span id="detailsCounter">0</span>/15000</div>
+                    <div id="previewContainer" class="markdown-preview" style="display:none;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="questionFiles" class="form-label">Прикрепить файлы</label>
+                    <div class="file-upload-area" id="fileDropArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Перетащите файлы сюда или кликните для выбора</p>
+                        <input type="file" id="questionFiles" name="files" class="form-control" multiple
+                               accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.7z,.js,.py,.java,.cpp,.h,.cs,.go,.rb,.php,.sh">
+                    </div>
+                    <div id="filePreviews" class="file-previews"></div>
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar"></div>
+                        <span class="progress-text">0%</span>
+                    </div>
+                    <small class="form-hint">Макс. размер: 100 MB. Допустимы: изображения, документы, архивы, код.</small>
+                </div>
+                
+                <div class="form-group select-theme">
+                    <label for="questionCategory" class="form-label required">Категория</label>
+                    <select id="questionCategory" name="category" class="form-control" required>
+                        <option value="">Выберите категорию</option>
+                        <option value="programming">Программирование</option>
+                        <option value="data-analysis">Анализ данных</option>
+                        <option value="design">Дизайн</option>
+                        <option value="devops">DevOps</option>
+                        <option value="mobile">Мобильная разработка</option>
+                    </select>
+                </div>
+                
+                <div class="form-group select-theme">
+                    <label for="questionSubtheme" class="form-label required">Подтема</label>
+                    <select id="questionSubtheme" name="subcategory" class="form-control" disabled required>
+                        <option value="">Сначала выберите категорию</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="questionTags" class="form-label">Теги</label>
+                    <div class="tags-container">
+                        <input type="text" id="questionTags" class="form-control" 
+                               placeholder="Введите тег и нажмите Enter">
+                        <div class="tags-suggestions" id="tagsSuggestions"></div>
+                    </div>
+                    <div class="selected-tags" id="selectedTags"></div>
+                    <input type="hidden" id="hiddenTags" name="tags">
+                    <small class="form-hint">Используйте теги для лучшей категоризации (макс. 5 тегов)</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Отмена</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Опубликовать вопрос</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+<!-- Панель пользователя -->
+<div class="user-panel">
+    <div class="user-info">
+        <div class="user-avatar">
+            {% if user.avatar.startswith('avatars_ID/') %}
+                <!-- Пользовательская аватарка -->
+                <img src="{{ url_for('get_avatar', avatar_path=user.avatar) }}" 
+                     alt="Аватар пользователя"
+                     onerror="this.onerror=null; 
+                             this.src='{{ url_for('static', filename='img/standard_user_avatar.png') }}';
+                             this.onerror=null;
+                             this.parentElement.innerHTML='{{ user.username[0]|upper }}'">
+            {% else %}
+                <!-- Стандартная аватарка -->
+                <img src="{{ url_for('static', filename='img/' + user.avatar) }}" 
+                     alt="Стандартный аватар"
+                     onerror="this.onerror=null; 
+                             this.parentElement.innerHTML='{{ user.username[0]|upper }}'">
+            {% endif %}
+        </div>
+        <div class="user-name">{{ user.username }}</div>
+    </div>
+    
+    <div class="settings-container">
+        <a href="{{ url_for('profile_settings') }}" class="settings-btn">
+            <svg class="settings-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle r="3" cy="12" cx="12"></circle>
+            </svg>
+        </a>
+        <div class="tooltip">Настройки</div>
+    </div>
+</div>
+ 
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Константы
+        const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 МБ
+        const MAX_TAGS = 5;
+        
+        // Элементы DOM
+        const form = document.getElementById('createQuestionForm');
+        const titleInput = document.getElementById('questionTitle');
+        const contentInput = document.getElementById('questionDetails');
+        const categorySelect = document.getElementById('questionCategory');
+        const subcategorySelect = document.getElementById('questionSubtheme');
+        const tagsInput = document.getElementById('questionTags');
+        const hiddenTagsInput = document.getElementById('hiddenTags');
+        const selectedTagsContainer = document.getElementById('selectedTags');
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileInput = document.getElementById('questionFiles');
+        const filePreviews = document.getElementById('filePreviews');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Состояние
+        let selectedTags = [];
+        let uploadedFiles = [];
+        
+        // Инициализация
+        init();
+
+        function init() {
+            setupEventListeners();
+            loadCategories();
+        }
+
+        function setupEventListeners() {
+            // Изменение категории
+            categorySelect.addEventListener('change', loadSubthemes);
+            
+            // Отправка формы
+            form.addEventListener('submit', handleFormSubmit);
+            
+            // Система тегов
+            initTagSystem();
+            
+            // Загрузка файлов
+            initFileUpload();
+        }
+
+        function loadCategories() {
+            // В реальном приложении можно загружать с сервера
+            const categories = [
+                { id: 'programming', name: 'Программирование' },
+                { id: 'data-analysis', name: 'Анализ данных' },
+                { id: 'design', name: 'Дизайн' },
+                { id: 'devops', name: 'DevOps' },
+                { id: 'mobile', name: 'Мобильная разработка' }
+            ];
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+        }
+
+        function loadSubthemes() {
+            const category = categorySelect.value;
+            subcategorySelect.innerHTML = '<option value="">Выберите подтему</option>';
+            subcategorySelect.disabled = true;
+            
+            if (!category) return;
+            
+            fetch(`/api/subthemes/${category}`)
+                .then(response => response.json())
+                .then(subthemes => {
+                    subthemes.forEach(subtheme => {
+                        const option = document.createElement('option');
+                        option.value = subtheme.id;
+                        option.textContent = subtheme.name;
+                        subcategorySelect.appendChild(option);
+                    });
+                    subcategorySelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки подтем:', error);
+                    showNotification('Ошибка загрузки подтем', 'error');
+                });
+        }
+
+        function initTagSystem() {
+            // Ввод тегов
+            tagsInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    addTag(tagsInput.value.trim());
+                    tagsInput.value = '';
+                }
+            });
+            
+            // Подсказки тегов (можно загружать с сервера)
+            const popularTags = ['javascript', 'python', 'java', 'html', 'css', 'react', 'vue', 'angular'];
+            
+            tagsInput.addEventListener('input', () => {
+                const value = tagsInput.value.trim().toLowerCase();
+                
+                if (value.length === 0 || selectedTags.length >= MAX_TAGS) {
+                    tagsSuggestions.style.display = 'none';
+                    return;
+                }
+                
+                const filtered = popularTags.filter(tag => 
+                    tag.includes(value) && !selectedTags.includes(tag));
+                
+                if (filtered.length > 0) {
+                    tagsSuggestions.innerHTML = filtered.map(tag => `
+                        <div class="tag-suggestion" data-tag="${tag}">${tag}</div>
+                    `).join('');
+                    
+                    tagsSuggestions.style.display = 'block';
+                    
+                    // Обработка выбора тега из подсказок
+                    document.querySelectorAll('.tag-suggestion').forEach(item => {
+                        item.addEventListener('click', () => {
+                            addTag(item.getAttribute('data-tag'));
+                            tagsInput.value = '';
+                            tagsSuggestions.style.display = 'none';
+                        });
+                    });
+                } else {
+                    tagsSuggestions.style.display = 'none';
+                }
+            });
+        }
+
+        function addTag(tag) {
+            if (!tag || selectedTags.length >= MAX_TAGS || selectedTags.includes(tag)) {
+                return;
+            }
+            
+            selectedTags.push(tag);
+            renderSelectedTags();
+            updateHiddenTags();
+        }
+
+        function removeTag(tag) {
+            selectedTags = selectedTags.filter(t => t !== tag);
+            renderSelectedTags();
+            updateHiddenTags();
+        }
+
+        function renderSelectedTags() {
+            selectedTagsContainer.innerHTML = selectedTags.map(tag => `
+                <div class="tag">
+                    ${tag}
+                    <span class="tag-remove" data-tag="${tag}">&times;</span>
+                </div>
+            `).join('');
+            
+            // Обработка удаления тегов
+            document.querySelectorAll('.tag-remove').forEach(item => {
+                item.addEventListener('click', () => {
+                    removeTag(item.getAttribute('data-tag'));
+                });
+            });
+        }
+
+        function updateHiddenTags() {
+            hiddenTagsInput.value = selectedTags.join(',');
+        }
+
+        function initFileUpload() {
+            // Drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Подсветка при перетаскивании
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                fileDropArea.style.borderColor = 'var(--primary-color)';
+                fileDropArea.style.backgroundColor = 'rgba(0, 120, 255, 0.1)';
+            }
+            
+            function unhighlight() {
+                fileDropArea.style.borderColor = 'var(--border-color)';
+                fileDropArea.style.backgroundColor = '';
+            }
+            
+            // Обработка drop
+            fileDropArea.addEventListener('drop', handleDrop, false);
+            
+            // Клик для выбора файлов
+            fileDropArea.addEventListener('click', () => fileInput.click());
+            
+            // Обработка выбора файлов
+            fileInput.addEventListener('change', () => {
+                handleFiles(fileInput.files);
+            });
+        }
+
+        function handleDrop(e) {
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            // Проверка размера файлов
+            for (let file of files) {
+                if (file.size > MAX_FILE_SIZE) {
+                    showNotification(`Файл "${file.name}" превышает 100 МБ`, 'error');
+                    return;
+                }
+            }
+            
+            // Создание превью
+            Array.from(files).forEach(file => {
+                createFilePreview(file);
+            });
+        }
+
+        function createFilePreview(file) {
+            const preview = document.createElement('div');
+            preview.className = 'file-preview';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'file-remove';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                preview.remove();
+            });
+            
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.textContent = file.name;
+            
+            preview.appendChild(removeBtn);
+            
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                preview.appendChild(img);
+            } else {
+                const icon = document.createElement('i');
+                icon.className = getFileIcon(file);
+                preview.appendChild(icon);
+            }
+            
+            preview.appendChild(fileName);
+            filePreviews.appendChild(preview);
+        }
+
+        function getFileIcon(file) {
+            const type = file.type.split('/')[0];
+            const extension = file.name.split('.').pop().toLowerCase();
+            
+            const iconMap = {
+                'pdf': 'far fa-file-pdf',
+                'doc': 'far fa-file-word',
+                'docx': 'far fa-file-word',
+                'txt': 'far fa-file-alt',
+                'zip': 'far fa-file-archive',
+                'rar': 'far fa-file-archive',
+                '7z': 'far fa-file-archive',
+                'js': 'fab fa-js',
+                'py': 'fab fa-python',
+                'java': 'far fa-file-code',
+                'cpp': 'far fa-file-code',
+                'h': 'far fa-file-code',
+                'cs': 'far fa-file-code',
+                'go': 'far fa-file-code',
+                'php': 'fab fa-php',
+                'rb': 'far fa-file-code',
+                'sh': 'far fa-file-code'
+            };
+            
+            return iconMap[extension] || 
+                   (type === 'image' ? 'far fa-file-image' : 'far fa-file');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // Валидация формы
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Блокировка кнопки отправки
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+            
+            // Создание FormData для отправки
+            const formData = new FormData(form);
+            
+            // Добавляем файлы
+            const files = fileInput.files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+            
+            // Отправка на сервер
+            fetch('/api/questions/create', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Вопрос успешно опубликован!', 'success');
+                    window.location.href = data.redirect;
+                } else {
+                    showNotification(data.error || 'Ошибка при публикации вопроса', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Опубликовать вопрос';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showNotification('Ошибка при отправке вопроса', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Опубликовать вопрос';
+            });
+        }
+
+        function validateForm() {
+            let isValid = true;
+            
+            // Заголовок
+            if (titleInput.value.trim().length < 10) {
+                showError(titleInput, 'Заголовок должен содержать не менее 10 символов');
+                isValid = false;
+            } else {
+                clearError(titleInput);
+            }
+            
+            // Описание
+            if (contentInput.value.trim().length < 20) {
+                showError(contentInput, 'Описание должно содержать не менее 20 символов');
+                isValid = false;
+            } else {
+                clearError(contentInput);
+            }
+            
+            // Категория
+            if (!categorySelect.value) {
+                showError(categorySelect, 'Выберите категорию');
+                isValid = false;
+            } else {
+                clearError(categorySelect);
+            }
+            
+            // Подтема
+            if (!subcategorySelect.value) {
+                showError(subcategorySelect, 'Выберите подтему');
+                isValid = false;
+            } else {
+                clearError(subcategorySelect);
+            }
+            
+            return isValid;
+        }
+
+        function showError(element, message) {
+            const formGroup = element.closest('.form-group');
+            if (!formGroup) return;
+            
+            let errorElement = formGroup.querySelector('.error-message');
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.className = 'error-message';
+                formGroup.appendChild(errorElement);
+            }
+            
+            errorElement.textContent = message;
+            element.style.borderColor = '#f44336';
+        }
+
+        function clearError(element) {
+            const formGroup = element.closest('.form-group');
+            if (!formGroup) return;
+            
+            const errorElement = formGroup.querySelector('.error-message');
+            if (errorElement) {
+                errorElement.remove();
+            }
+            
+            element.style.borderColor = 'rgba(0, 120, 255, 0.2)';
+        }
+
+        function showNotification(message, type) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const iconClass = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-circle',
+                'info': 'fas fa-info-circle'
+            }[type];
+            
+            notification.innerHTML = `<i class="${iconClass}"></i> ${message}`;
+            container.appendChild(notification);
+            
+            // Автоматическое скрытие
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 1000);
+            }, 4000);
+        }
+    });
+
+        // Инициализация мобильного меню
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const menu = document.getElementById('mobileMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Обработка кликов по категориям (раскрытие/скрытие подкатегорий)
+        document.querySelectorAll('.theme-main').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Проверяем, не был ли клик на подкатегории
+                if (!e.target.classList.contains('subtheme')) {
+                    const category = this.closest('.theme-category');
+                    category.classList.toggle('active');
+                }
+            });
+        });
+
+        // Обработка кликов по подкатегориям (установка активного состояния)
+        document.querySelectorAll('.subtheme').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.subtheme').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Автоматическое раскрытие активной категории при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeSubtheme = document.querySelector('.subtheme.active');
+            if (activeSubtheme) {
+                const category = activeSubtheme.closest('.theme-category');
+                if (category) {
+                    category.classList.add('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{
+  "programming/": [
+    "javascript.json", 
+    "python.json", 
+    "java.json", 
+    "cpp.json", 
+    "csharp.json", 
+    "go.json", 
+    "ruby.json", 
+    "php.json", 
+    "swift.json", 
+    "kotlin.json", 
+    "assembler.json", 
+    "typescript.json", 
+    "rust.json" 
+  ],
+  "data-analysis/": [
+    "sql.json", 
+    "pandas.json", 
+    "numpy.json", 
+    "ml.json", 
+    "analytics.json",
+    "bigdata.json"
+  ],
+  "design/": [
+    "uiux.json",
+    "figma.json",
+    "photoshop.json",
+    "illustrator.json",
+    "webdesign.json",
+    "mobiledesign.json"
+  ],
+  "devops/": [
+    "docker.json",
+    "kubernetes.json",
+    "cicd.json",
+    "aws.json",
+    "azure.json",
+    "sysadmin.json"
+  ],
+  "mobile/": [
+    "android.json",
+    "ios.json",
+    "flutter.json",
+    "reactnative.json"
+  ]
+}

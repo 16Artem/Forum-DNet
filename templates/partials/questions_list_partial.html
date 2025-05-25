@@ -1,0 +1,36 @@
+<!-- templates/partials/questions_list_partial.html -->
+{% if posts %}
+    {% for post in posts %}
+    <div class="question-card" data-question-id="{{ post.id }}">
+        <a href="{{ url_for('view_question', post_id=post.id) }}" class="question-title">{{ post.title }}</a>
+        <div class="question-meta">
+            <span><i class="far fa-user"></i> {{ post.author.username }}</span>
+            <span><i class="far fa-clock"></i> {{ post.date }}</span>
+            <span><i class="far fa-comment"></i> {{ post.answers|length }} ответов</span>
+            <span><i class="far fa-eye"></i> {{ post.views }} просмотров</span>
+            <div class="like-dislike">
+                <button class="like-btn" 
+                        hx-post="/vote"
+                        hx-trigger="click"
+                        hx-target="[data-question-id='{{ post.id }}']"
+                        hx-swap="outerHTML"
+                        hx-vals='{"question_id": "{{ post.id }}", "vote_type": "like"}'>
+                    <i class="fas fa-thumbs-up"></i>
+                </button>
+                <span class="likes-count">{{ post.likes }}</span>
+                <button class="dislike-btn" 
+                        hx-post="/vote"
+                        hx-trigger="click"
+                        hx-target="[data-question-id='{{ post.id }}']"
+                        hx-swap="outerHTML"
+                        hx-vals='{"question_id": "{{ post.id }}", "vote_type": "dislike"}'>
+                    <i class="fas fa-thumbs-down"></i>
+                </button>
+                <span class="dislikes-count">{{ post.dislikes }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="no-questions">Пока нет вопросов по этой теме</div>
+{% endif %}

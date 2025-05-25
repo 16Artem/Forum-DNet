@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNet | Аккаунт заблокирован</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/dnet.png') }}">
+    <style type="text/css">
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #4facfe;
+            --secondary-color: #00f2fe;
+            --bg-dark: #0f1721;
+            --text-light: rgba(255, 255, 255, 0.9);
+            --error-color: #ff4d4d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .blocked-message {
+            margin-bottom: 3rem;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .game-container {
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        .game {
+            width: 600px;
+            height: 200px;
+            border: 2px solid rgba(79, 172, 254, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(15, 23, 33, 0.7);
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.3;
+        }
+
+        #dino {
+            width: 50px;
+            height: 50px;
+            background-image: url('https://github.com/FilimonovAlexey/Dino-game/blob/main/images/dino.png?raw=true');
+            background-size: 50px 50px;
+            position: absolute;
+            top: 150px;
+            left: 50px;
+            z-index: 2;
+        }
+
+        #cactus {
+            width: 20px;
+            height: 40px;
+            background-image: url('https://github.com/FilimonovAlexey/Dino-game/blob/main/images/cactus.png?raw=true');
+            background-size: 20px 40px;
+            position: absolute;
+            top: 160px;
+            left: 580px;
+            z-index: 2;
+        }
+
+        .score-display {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 1rem;
+            color: var(--text-light);
+            z-index: 3;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 33, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 4;
+        }
+
+        .game-over h2 {
+            color: var(--error-color);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .restart-btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .restart-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        @keyframes cactusMov {
+            0% { left: 580px; }
+            100% { left: -20px; }
+        }
+
+        @keyframes jump {
+            0% { top: 150px; }
+            30% { top: 130px; }
+            50% { top: 80px; }
+            80% { top: 130px; }
+            100% { top: 150px; }
+        }
+
+        .jump {
+            animation: jump 0.5s linear;
+        }
+
+        .move {
+            animation: cactusMov 1.5s infinite linear;
+        }
+
+        .instructions {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="blocked-message">
+        <h1>Ваш аккаунт заблокирован!</h1>
+        <p>Доступ к системе ограничен из-за нарушения правил</p>
+        <p>Нарушение: Использование запрещённых скриптов</p>
+        <p>Для разблокировки обратитесь в поддержку</p>
+    </div>
+
+    <div class="game-container">
+        <div class="score-display">Очки: <span id="score">0</span></div>
+        <div class="game">
+            <div class="ground"></div>
+            <div id="dino"></div>
+            <div id="cactus" class="move"></div>
+            <div class="game-over" id="gameOver">
+                <h2>Игра окончена!</h2>
+                <p>Ваш результат: <span id="finalScore">0</span> очков</p>
+                <button class="restart-btn" id="restartBtn">Играть снова</button>
+            </div>
+        </div>
+        <p class="instructions">Нажмите ПРОБЕЛ, чтобы прыгать</p>
+    </div>
+
+    <script>
+        const dino = document.getElementById("dino");
+        const cactus = document.getElementById("cactus");
+        const scoreElement = document.getElementById("score");
+        const finalScoreElement = document.getElementById("finalScore");
+        const gameOverScreen = document.getElementById("gameOver");
+        const restartBtn = document.getElementById("restartBtn");
+
+        let score = 0;
+        let isGameOver = false;
+        let gameSpeed = 1.5;
+        let scoreInterval;
+
+        function jump() {
+            if (dino.classList.contains("jump") || isGameOver) return;
+            
+            dino.classList.add("jump");
+            setTimeout(() => {
+                dino.classList.remove("jump");
+            }, 500);
+        }
+
+        function updateScore() {
+            score++;
+            scoreElement.textContent = score;
+            
+            // Увеличиваем сложность
+            if (score % 100 === 0) {
+                gameSpeed += 0.2;
+                cactus.style.animationDuration = `${1.5/gameSpeed}s`;
+            }
+        }
+
+        function checkCollision() {
+            const dinoRect = dino.getBoundingClientRect();
+            const cactusRect = cactus.getBoundingClientRect();
+            
+            return (
+                dinoRect.right > cactusRect.left &&
+                dinoRect.left < cactusRect.right &&
+                dinoRect.bottom > cactusRect.top
+            );
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(scoreInterval);
+            cactus.style.animation = 'none';
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function startGame() {
+            isGameOver = false;
+            score = 0;
+            gameSpeed = 1.5;
+            scoreElement.textContent = '0';
+            cactus.style.left = '580px';
+            cactus.style.animation = `cactusMov ${1.5/gameSpeed}s infinite linear`;
+            gameOverScreen.style.display = 'none';
+            
+            scoreInterval = setInterval(updateScore, 100);
+        }
+
+        // Проверка столкновений
+        setInterval(() => {
+            if (!isGameOver && checkCollision()) {
+                gameOver();
+            }
+        }, 10);
+
+        // Управление
+        document.addEventListener("keydown", (event) => {
+            if (event.code === "Space") {
+                if (isGameOver) {
+                    startGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+
+        restartBtn.addEventListener("click", startGame);
+
+        // Начало игры при первом нажатии
+        document.addEventListener("keydown", function firstStart(event) {
+            if (event.code === "Space") {
+                startGame();
+                document.removeEventListener("keydown", firstStart);
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>

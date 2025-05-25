@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNet ▏ Регистрация</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/dnet.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notification.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0a0a0a;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(0, 40, 80, 0.2) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 60, 120, 0.2) 0%, transparent 20%);
+        }
+
+        .wrapper {
+            width: 420px;
+            background: rgba(10, 15, 25, 0.8);
+            border: 1px solid rgba(0, 120, 255, 0.2);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: #fff;
+            border-radius: 15px;
+            padding: 30px 40px;
+            box-shadow: 0 10px 25px rgba(0, 60, 120, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(0, 80, 160, 0.1),
+                rgba(0, 120, 255, 0.05),
+                transparent
+            );
+            transform: rotate(30deg);
+            pointer-events: none;
+        }
+
+        .wrapper:hover {
+            box-shadow: 0 15px 35px rgba(0, 80, 160, 0.4);
+            transform: translateY(-5px);
+        }
+
+        .form-header {
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .input-box {
+            position: relative;
+            width: 100%;
+            height: 50px;
+            margin: 25px 0;
+        }
+
+        .input-box input {
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            outline: none;
+            border: 1px solid rgba(0, 120, 255, 0.3);
+            border-radius: 8px;
+            font-size: 16px;
+            color: #fff;
+            padding: 20px 45px 20px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .input-box input:focus {
+            border-color: rgba(0, 150, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .input-box input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .input-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn {
+            width: 100%;
+            height: 45px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            border: none;
+            outline: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #111;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to right, #3a92d8, #00c8e6);
+            box-shadow: 0 5px 15px rgba(0, 150, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .register-link {
+            font-size: 14px;
+            text-align: center;
+            margin: 25px 0 15px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .register-link a {
+            color: #4facfe;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .register-link a:hover {
+            color: #00f2fe;
+            text-decoration: underline;
+        }
+
+        /* Стили для кастомных чекбоксов */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s;
+        }
+
+        .checkbox-container:hover {
+            color: #fff;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 20px;
+            width: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 120, 255, 0.5);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .checkbox-container:hover .checkmark {
+            border-color: rgba(0, 150, 255, 0.8);
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #4facfe;
+            border-color: #4facfe;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .checkbox-container .checkmark:after {
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .terms-link {
+            color: #4facfe;
+            text-decoration: none;
+            margin-left: 5px;
+            transition: all 0.3s;
+        }
+
+        .terms-link:hover {
+            color: #00f2fe;
+            text-decoration: underline;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            overflow: auto;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: rgba(15, 20, 30, 0.95);
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid rgba(0, 120, 255, 0.3);
+            border-radius: 10px;
+            width: 80%;
+            max-width: 700px;
+            box-shadow: 0 5px 30px rgba(0, 60, 120, 0.5);
+            position: relative;
+        }
+
+        .close-modal {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            color: #00f2fe;
+            font-size: 26px;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            padding-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 15px;
+            color: #e0f7ff;
+        }
+
+        .modal-body p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .modal-body h3 {
+            color: #4facfe;
+            margin: 25px 0 15px;
+            font-size: 20px;
+            text-shadow: 0 0 8px rgba(79, 172, 254, 0.2);
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .wrapper {
+                width: 90%;
+                padding: 25px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 20px;
+            }
+        }
+
+        /* Стили для правил модерации */
+        .modal-body ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal-body li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background-color: rgba(0, 80, 160, 0.2);
+            padding: 15px;
+            border-left: 3px solid #4facfe;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .highlight strong {
+            color: #00f2fe;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <form id="register-form" method="POST" action="{{ url_for('register') }}">
+            <h1 class="form-header">Регистрация</h1>
+
+            <div class="input-box">
+                <input type="text" name="username" placeholder="Имя пользователя" required minlength="3">
+                <i class="fas fa-user"></i>
+            </div>
+
+            <div class="input-box">
+                <input type="password" name="password" placeholder="Пароль" required minlength="6">
+                <i class="fas fa-lock"></i>
+            </div>
+
+            <div class="input-box">
+                <input type="password" name="confirm_password" placeholder="Подтвердите пароль" required minlength="6">
+                <i class="fas fa-lock"></i>
+            </div>
+
+            <div class="terms-agreement">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="agree-terms" name="agree_terms" required>
+                    <span class="checkmark"></span>
+                    Я принимаю <a href="#" class="terms-link" id="show-terms">пользовательское соглашение</a>
+                    и <a href="#" class="terms-link" id="show-moderation-rules">правила модерации</a>
+                </label>
+            </div>
+
+            <button type="submit" class="btn">Зарегистрироваться</button>
+
+            <div class="register-link">
+                <p>Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+            </div>
+        </form>
+    </div>
+
+    <div id="notification-container"></div>
+
+    <!-- Модальное окно с пользовательским соглашением -->
+    <div id="terms-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Пользовательское соглашение</h2>
+            </div>
+            <div class="modal-body">
+                <h3>1. Общие положения</h3>
+                <p>1.1. Настоящее Соглашение регулирует отношения между Администрацией и Пользователем при использовании сервиса. Сервис является <strong>некоммерческим</strong> и существует в виде технического эксперимента.</p>
+                <p>1.2. Сервис <strong>не требует</strong> указания персональных данных (ФИО, телефона, e-mail). Все действия совершаются анонимно.</p>
+
+                <h3>2. Условия использования</h3>
+                <p>2.1. Пользователь подтверждает, что:</p>
+                <ul>
+                    <li>Ему <strong>исполнилось 18 лет</strong> (или он достиг возраста цифрового согласия в своей стране);</li>
+                    <li>Он <strong>не будет</strong> размещать контент, нарушающий законы РФ (экстремизм, наркотики, порнография, призывы к насилию);</li>
+                    <li>Он несёт <strong>полную ответственность</strong> за всё, что публикует.</li>
+                </ul>
+
+                <h3>3. Данные и конфиденциальность</h3>
+                <p>3.1. Сервис хранит только:</p>
+                <ul>
+                    <li>Добровольно указанные <strong>никнейм и пароль</strong>;</li>
+                    <li>IP-адрес (для защиты от злоупотреблений);</li>
+                    <li>Контент, созданный Пользователем.</li>
+                </ul>
+                <p>3.2. Логи действий хранятся <strong>30 дней</strong>, после чего автоматически удаляются.</p>
+
+                <h3>4. Ограничения</h3>
+                <p>4.1. <strong>Запрещено</strong>:</p>
+                <ul>
+                    <li>Распространять вредоносное ПО, спам, вирусы;</li>
+                    <li>Попытки взлома или DDOS-атак;</li>
+                    <li>Создание мультиаккаунтов для обхода блокировок.</li>
+                </ul>
+
+                <h3>5. Ответственность</h3>
+                <p>5.1. Администрация <strong>не несёт ответственности</strong>:</p>
+                <ul>
+                    <li>За пользовательский контент;</li>
+                    <li>За временные сбои в работе сервиса;</li>
+                    <li>За действия третьих лиц (например, утечку данных из-за хакерской атаки).</li>
+                </ul>
+                <p>5.2. Администрация вправе <strong>удалять любой контент</strong> без объяснения причин.</p>
+
+                <h3>6. Прочие условия</h3>
+                <p>6.1. Сервис предоставляется «как есть» без гарантий.</p>
+                <p>6.2. Администрация оставляет за собой право изменять Соглашение без уведомления.</p>
+                
+                <div class="highlight">
+                    <p><strong>Обратите внимание:</strong> Дополнительные правила поведения пользователей описаны в <a href="#" id="show-rules-from-terms">Правилах модерации</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно с правилами модерации -->
+    <div id="moderation-rules-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h2>Правила модерации контента</h2>
+            </div>
+            <div class="modal-body">
+                <p><em>Последнее обновление: [Дата]</em></p>
+
+                <div class="highlight">
+                    <strong>Важно:</strong> Эти правила дополняют <a href="#" id="show-terms-from-rules">Пользовательское соглашение</a>. Нарушение может привести к удалению контента или блокировке аккаунта.
+                </div>
+
+                <h3>1. Запрещённый контент</h3>
+                <p>Мы <strong>немедленно удаляем</strong> без предупреждения:</p>
+                <ul>
+                    <li>Экстремизм, терроризм, оправдание насилия</li>
+                    <li>Пропаганда наркотиков (включая «лёгкие»)</li>
+                    <li>Порнография и сексуализированный контент с участием несовершеннолетних</li>
+                    <li>Призывы к суициду или причинению вреда здоровью</li>
+                    <li>Финансовые мошенничества (обманные схемы, фейковые магазины)</li>
+                    <li>Угрозы, травля, дискриминация по расе, полу, религии</li>
+                </ul>
+
+                <h3>2. Контент с ограничениями</h3>
+                <p>Может быть удалён по жалобам:</p>
+                <ul>
+                    <li>Мат и оскорбления (зависит от контекста)</li>
+                    <li>Политические дискуссии (без нарушения законов РФ)</li>
+                    <li>Пиратский контент (ссылки на нелегальный софт, фильмы)</li>
+                    <li>Фейковые новости (без отметки «сатира» или «мнение»)</li>
+                </ul>
+
+                <h3>3. Как работают жалобы</h3>
+                <ol>
+                    <li>Нажмите кнопку <strong>«Пожаловаться»</strong> под постом/комментарием</li>
+                    <li>Выберите причину (спам, нарушение правил и т.д.)</li>
+                    <li>Модератор проверит в течение 24 часов</li>
+                    <li>При подтверждении нарушения контент будет удалён</li>
+                </ol>
+
+                <h3>4. Блокировки аккаунтов</h3>
+                <p>Мы применяем <strong>постепенные санкции</strong>:</p>
+                <table border="1" cellpadding="8" cellspacing="0" style="width:100%; margin: 15px 0; border-collapse: collapse;">
+                    <tr>
+                        <th>Нарушение</th>
+                        <th>Первое</th>
+                        <th>Повторное</th>
+                        <th>Систематическое</th>
+                    </tr>
+                    <tr>
+                        <td>Спам/флуд</td>
+                        <td>Предупреждение</td>
+                        <td>Бан на 3 дня</td>
+                        <td>Пермабан</td>
+                    </tr>
+                    <tr>
+                        <td>Оскорбления</td>
+                        <td>Бан на 1 день</td>
+                        <td>Бан на 7 дней</td>
+                        <td>Пермабан</td>
+                    </tr>
+                    <tr>
+                        <td>Экстремизм</td>
+                        <td colspan="3" style="text-align: center;">Пермабан + передача данных в Роскомнадзор*</td>
+                    </tr>
+                </table>
+                <p><small>* Только по официальному запросу уполномоченных органов.</small></p>
+
+                <h3>5. Обжалование решений</h3>
+                <p>Если вы считаете блокировку несправедливой:</p>
+                <ul>
+                    <li>Напишите на <a href="mailto:appeals@вашсайт.ru">appeals@вашсайт.ru</a></li>
+                    <li>Укажите ник и причину обжалования</li>
+                    <li>Ответим в течение 3 рабочих дней</li>
+                </ul>
+
+                <div class="highlight">
+                    <strong>Для модераторов:</strong> Все решения должны быть беспристрастными. За злоупотребление полномочиями — снятие прав модератора.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/notification.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/htmx.min.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const registerForm = document.getElementById('register-form');
+            const termsModal = document.getElementById('terms-modal');
+            const rulesModal = document.getElementById('moderation-rules-modal');
+            const showTerms = document.getElementById('show-terms');
+            const showRules = document.getElementById('show-moderation-rules');
+            const showRulesFromTerms = document.getElementById('show-rules-from-terms');
+            const showTermsFromRules = document.getElementById('show-terms-from-rules');
+            const closeModals = document.querySelectorAll('.close-modal');
+            const agreeTerms = document.getElementById('agree-terms');
+
+            // Функция для открытия модального окна
+            function openModal(modal) {
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+
+            // Функция для закрытия модального окна
+            function closeModal(modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+
+            // Показать модальное окно с соглашением
+            showTerms.addEventListener('click', function(e) {
+                e.preventDefault();
+                openModal(termsModal);
+            });
+
+            // Показать модальное окно с правилами модерации
+            showRules.addEventListener('click', function(e) {
+                e.preventDefault();
+                openModal(rulesModal);
+            });
+
+            // Переход из соглашения к правилам
+            showRulesFromTerms.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeModal(termsModal);
+                openModal(rulesModal);
+            });
+
+            // Переход из правил к соглашению
+            showTermsFromRules.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeModal(rulesModal);
+                openModal(termsModal);
+            });
+
+            // Закрыть модальные окна
+            closeModals.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    closeModal(modal);
+                });
+            });
+
+            // Закрыть при клике вне окна
+            window.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    closeModal(e.target);
+                }
+            });
+
+            // Автопрокрутка соглашения
+            const modalContents = document.querySelectorAll('.modal-content');
+            modalContents.forEach(content => {
+                content.addEventListener('scroll', function() {
+                    const scrollPercentage = (content.scrollTop + content.clientHeight) /
+                                          content.scrollHeight * 100;
+                    if (scrollPercentage > 90 && this.parentElement.id === 'terms-modal') {
+                        agreeTerms.checked = true;
+                    }
+                });
+            });
+
+            // Валидация формы
+            registerForm.addEventListener('submit', function(e) {
+                const password = document.querySelector('input[name="password"]').value;
+                const confirm = document.querySelector('input[name="confirm_password"]').value;
+
+                if (!agreeTerms.checked) {
+                    e.preventDefault();
+                    showNotification('Примите пользовательское соглашение', 'error');
+                    return;
+                }
+
+                if (password !== confirm) {
+                    e.preventDefault();
+                    showNotification('Пароли не совпадают', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    e.preventDefault();
+                    showNotification('Пароль должен быть не менее 6 символов', 'error');
+                    return;
+                }
+
+                showNotification('Регистрация выполняется...', 'info');
+            });
+        });
+    </script>
+</body>
+</html>
